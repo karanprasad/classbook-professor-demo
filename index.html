@@ -18,6 +18,17 @@
 .load-more{grid-column:1/-1;justify-self:center;margin-top:10px}
 :root{--paper:#faf9f6;--white:#fff;--ink:#333f48;--muted:#77766d;--green:#bf5700;--light:#f3f1e9;--line:#e4e0d5;--accent:#d6d2c4;--error:#943126}
 .brand,.brand-mark{color:#bf5700}.demo-banner{background:#bf5700;color:#fff;border-color:#bf5700}.demo-banner button{color:#fff}.demo-banner .status-dot{background:#fff}.banner-divider{color:#fff;opacity:.55}.site-header{background:#fff}.site-header nav .active:after{background:#bf5700}.site-header nav button{color:#6a6d69}.demo-edition{color:#77766d}.demo-edition span{color:#888a84}.page-heading h1,.search-title h2,.section-heading h2,.profile-heading h3{color:#333f48}.heading-dot{color:#bf5700}.demo-stats strong{color:#bf5700}.demo-stats>span{color:#77766d}.line-icon.small{color:#bf5700;background:#faf9f6;border-color:#d6d2c4}.primary{background:#bf5700;border-color:#bf5700}.primary:hover:not(:disabled){filter:none;background:#333f48;border-color:#333f48}.secondary{border-color:#d6d2c4;color:#bf5700}.search-tabs button{color:#77766d}.search-tabs button.selected{color:#bf5700;border-color:#bf5700}.query-row{background:#fff;border-color:#d6d2c4}.query-row>span{color:#bf5700}input::placeholder{color:#90918a}.example-row>span{color:#888a84}.example-row button{background:#fff;border-color:#d6d2c4;color:#666e72}.example-row button:hover{border-color:#bf5700;color:#bf5700}.search-options{border-color:#ebe7df}.search-options>p{color:#77766d}.section-heading h2>span{background:#f3f1e9;border-color:#d6d2c4;color:#6d7068}.results-meta>p,.profile-heading p,.source-note{color:#77766d}.results-meta .text-button,.profile-link,.card-detail{color:#bf5700}.profile-link{border-color:#d6d2c4}.avatar.sage,.avatar.clay,.avatar.sand,.avatar.blue,.avatar.rose{background:#f3f1e9;color:#bf5700}.profile-card .card-divider,.card-detail{border-color:#e9e5db}.role-text{color:#333f48}.demo-evidence{color:#72776f}.card-label{color:#77766d}.interest-chips>span{background:#f3f1e9;color:#737970}.evidence-badge{background:#fff;color:#bf5700;border:1px solid #d6d2c4}.review-badge{background:#f3f1e9;color:#77766d}.principles-strip>div>span{color:#bf5700}.principles-strip h3{color:#333f48}.principles-strip p,.directory-footer p>span{color:#77766d}.directory-footer{color:#333f48}.directory-footer>button{color:#bf5700}.empty-state{background:#fff;border-color:#d6d2c4}.empty-icon{color:#bf5700}dialog{background:#fff;border-color:#d6d2c4}dialog::backdrop{background:#333f4870}.dialog-close{color:#77766d}.modal-role{color:#bf5700}.modal-section>p:not(.card-label),.modal-intro,.about-step p,.modal-columns>div>p:last-child{color:#72776f}.about-step>span{color:#bf5700}.modal-footnote{color:#888a84}.notice{background:#f3f1e9;border-color:#d6d2c4;color:#333f48}.directory-footer .brand-mark{color:#bf5700}
+/* Source-based profile summaries and structured details. */
+.profile-coverage{font-size:11px;color:var(--muted);line-height:1.7;margin:-5px 0 22px}
+.profile-summary{font-size:12px;line-height:1.8;color:var(--ink);margin:0 0 14px;overflow-wrap:anywhere}
+.profile-facts{margin:0 0 14px;font-size:10px;line-height:1.7}.profile-facts>div{display:grid;grid-template-columns:55px minmax(0,1fr);gap:8px;margin:5px 0}.profile-facts dt{color:var(--muted)}.profile-facts dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.interest-label{font-size:9px;color:var(--muted);margin:0 0 6px}.interest-label+.interest-chips{margin:0 0 20px}
+.profile-card .source-note{margin:0 0 18px}.profile-card .card-detail{margin-top:auto}
+.modal-section>.card-label{font-size:10px;font-weight:500;letter-spacing:1px;margin:16px 0 13px}
+.evidence-list{list-style:none;margin:0;padding:0}.evidence-list li{border-left:2px solid var(--accent);padding:0 0 0 14px;margin:17px 0 20px}.evidence-list h4{font-size:13px;line-height:1.6;font-weight:600;overflow-wrap:anywhere}.evidence-list p{font-size:12px;line-height:1.7;margin-top:3px;overflow-wrap:anywhere}.evidence-list .evidence-meta{font-size:10px;color:var(--muted)}
+.skill-chips{display:flex;flex-wrap:wrap;gap:6px}.skill-chips span{font-size:10px;border:1px solid var(--line);border-radius:5px;padding:5px 8px;overflow-wrap:anywhere}.missing-detail{color:var(--muted);font-size:12px;line-height:1.8}
+.source-warning{font-size:11px;line-height:1.8;color:var(--muted);margin-top:22px}.source-excerpts{border-top:1px solid var(--line);margin-top:20px;padding-top:16px}.source-excerpts summary{cursor:pointer;font-size:11px;color:var(--green);line-height:1.8}.source-excerpts h4{font-size:11px;margin-top:15px}.source-excerpts p{font-size:11px;line-height:1.8;color:var(--muted);overflow-wrap:anywhere}
+@media(max-width:650px){.profile-coverage{font-size:10px}.profile-summary{font-size:13px}.profile-facts{font-size:11px}.interest-label{font-size:10px}}
 </style><meta name="directory-api" content="https://edvwcldlnlsyzhqeculx.supabase.co"><meta name="directory-key" content="sb_publishable_5xhwHbjb7xpMVL1QKvwICQ_2l4EdaAs"></head>
 <body>
 <div class="demo-banner"><span><span class="status-dot"></span>LIVE PREVIEW <span class="banner-divider">/</span> All profiles are fictional</span><button id="about-top">About this demo ↗</button></div>
@@ -29,7 +40,8 @@
 <form id="search-form"><label class="sr-only" for="query">Describe your search</label><div class="query-row"><span aria-hidden="true">⌕</span><input id="query" autocomplete="off" minlength="2" maxlength="300" placeholder="Who has worked in perishable supply chains?" required><button id="search-button" class="primary">Find connections <span aria-hidden="true">↗</span></button></div>
 <div class="example-row"><span>TRY A QUESTION</span><div id="examples"></div></div>
 <div class="search-options"><p id="mode-note">Work experience only. Interests never count as experience.</p><label for="cohort">Cohort <select id="cohort"><option value="">All cohorts</option><option>North</option><option>South</option></select></label></div></form></section>
-<section class="results-section" aria-live="polite" aria-busy="false"><div class="section-heading"><h2><span class="heading-text" id="results-title">Meet your classmates</span><span id="results-count">10</span></h2><div class="results-meta"><p id="results-description">A small class. A remarkable range of experience.</p><button class="text-button" id="reset" hidden>← Show everyone</button></div></div><div id="results" class="profile-grid"></div></section>
+<section class="results-section" aria-live="polite" aria-busy="false"><div class="section-heading"><h2><span class="heading-text" id="results-title">Meet your classmates</span><span id="results-count">10</span></h2><div class="results-meta"><p id="results-description">A small class. A remarkable range of experience.</p><button class="text-button" id="reset" hidden>← Show everyone</button></div></div><p id="profile-coverage" class="profile-coverage"></p>
+<div id="results" class="profile-grid"></div></section>
 <aside class="principles-strip"><div><span>01</span><h3>Start with evidence.</h3><p>Every experience connection points to a specific source excerpt.</p></div><div><span>02</span><h3>Keep curiosity separate.</h3><p>Shared interests open conversations. They don’t establish work experience.</p></div><div><span>03</span><h3>Let uncertainty wait.</h3><p>Missing evidence and unresolved identities stay out of professional matches.</p></div></aside>
 <footer class="directory-footer"><span class="brand-mark">c.</span><p>People first. Evidence always.<br/><span>Interactive concept demo · Fictional data · Illustrative sample search</span></p><button class="text-button" id="about-bottom">Explore the idea ↗</button></footer>
 </main>
@@ -96,6 +108,70 @@ async function loadPublicDirectory(config,transport=fetch){
  return normalizeProfiles(await response.json());
 }
 
+// Presentation only. Matching continues to use the original eligible source text.
+function profileText(value){
+ const text=typeof value==='string'?value.trim().replace(/\s+/g,' '):'';
+ return /^(?:\[\]|\{\}|null|none|n\/?a|not supplied|unknown)$/i.test(text)?'':text;
+}
+function profileList(values){return [...new Set((Array.isArray(values)?values:[]).map(profileText).filter(v=>v&&!/(?:\.\.\.|…)\s*$/.test(v)))];}
+function profileBrief(value){return value.length<=200?value:value.slice(0,196).replace(/\s+\S*$/,'')+'…';}
+function profileJoin(values){return values.length<2?values.join(''):values.slice(0,-1).join(', ')+' and '+values.at(-1);}
+function profileDate(value){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return value;
+ const month=Number(value.slice(5,7));
+ return month>=1&&month<=12?['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]+' '+value.slice(0,4):value;
+}
+function parseProfileEvidence(raw,kind){
+ const text=profileText(raw);if(!text)return [];
+ const labeled=kind==='work'?/^(?:Title|Employer|Location|Start date|End date):/:/^(?:Field|Institution|Degree level|Start year|End year):/;
+ if(!labeled.test(text))return [{title:text,organization:'',location:'',dates:'',detail:''}];
+ const labels=/(?:^|,\s*)(Title|Employer|Location|Start date|End date|Field|Institution|Degree level|Start year|End year):\s*/g;
+ const boundary=kind==='work'?/;\s*(?=(?:Title|Employer|Location|Start date|End date):)/:/;\s*(?=(?:Field|Institution|Degree level|Start year|End year):)/;
+ return text.split(boundary).flatMap(part=>{
+   const matches=[...part.matchAll(labels)],fields={};
+   matches.forEach((match,i)=>{
+     const value=profileText(part.slice(match.index+match[0].length,matches[i+1]?.index??part.length));
+     // A trailing ellipsis means the source cut this value off. Do not complete it.
+     if(value&&!/(?:\.\.\.|…)\s*$/.test(value))fields[match[1]]=value;
+   });
+   const start=fields[kind==='work'?'Start date':'Start year']||'',end=fields[kind==='work'?'End date':'End year']||'';
+   const title=kind==='work'?(fields.Title||fields.Employer):(fields.Institution||[fields['Degree level'],fields.Field].filter(Boolean).join(' · '));
+   if(!title)return [];
+   return [{title,organization:kind==='work'&&fields.Title?fields.Employer||'':'',location:fields.Location||'',
+     dates:start&&end?`${profileDate(start)} – ${profileDate(end)}`:start?`From ${profileDate(start)}`:end?`Until ${profileDate(end)}`:'',
+     detail:kind==='education'&&fields.Institution?[fields['Degree level'],fields.Field].filter(Boolean).join(' · '):''}];
+ });
+}
+function formatProfile(profile){
+ const allowed=!profile.quarantined&&!(profile.eligible===false&&profileText(profile.experience));
+ const work=allowed?parseProfileEvidence(profile.experience,'work'):[];
+ const education=allowed?parseProfileEvidence(profile.education,'education'):[];
+ const skills=allowed?profileList(profile.skills):[];
+ const interests=profileList(profile.interests);
+ const hasProfessional=allowed&&[profile.experience,profile.education,...skills].some(value=>!!profileText(value));
+ let summary='Profile details have not been supplied.';
+ if(work.length){
+   const first=work[0];
+   summary=/^(?:Title|Employer|Location|Start date|End date):/.test(profileText(profile.experience))?
+     `Listed experience: ${first.title}${first.organization?' at '+first.organization:''}.`:
+     (first.title.match(/^.*?[.!?](?:\s|$)/)?.[0].trim()||first.title);
+ }else if(skills.length)summary=`Listed skills: ${profileJoin(skills.slice(0,3))}.`;
+ else if(education.length)summary=`Listed education: ${education[0].title}${education[0].detail?' · '+education[0].detail:''}.`;
+ else if(interests.length)summary=`Interested in ${profileJoin(interests.slice(0,3))}.`;
+ else if(hasProfessional)summary='Professional source excerpt available; complete details were not supplied.';
+ return {work,education,skills,interests,hasProfessional,summary:profileBrief(summary),
+   status:hasProfessional?'Professional details':interests.length?'Interests only':'Details not available',
+   shortened:allowed&&[profile.experience,profile.education,...(profile.skills||[])].some(value=>/(?:\.\.\.|…)\s*$/.test(value||''))};
+}
+function profileCoverage(profiles){
+ return profiles.reduce((count,profile)=>{
+   const view=formatProfile(profile);count.total++;
+   if(view.hasProfessional)count.professional++;else if(view.interests.length)count.interestsOnly++;else count.missingDetails++;
+   return count;
+ },{total:0,professional:0,interestsOnly:0,missingDetails:0});
+}
+
+
 
 
 const $=id=>document.getElementById(id);
@@ -104,14 +180,16 @@ const csvMode=!!api;
 const config={url:api,key:document.querySelector('meta[name="directory-key"]')?.content};
 let mode='experience',searched=false,searchVersion=0,browseLimit=24,ready=!csvMode;
 const escape=text=>String(text??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const classLabel=p=>[p.year?`Class of ${p.year}`:csvMode?'':'Class of 2027',p.cohort?`${p.cohort}${/cohort/i.test(p.cohort)?'':' cohort'}`:''].filter(Boolean).join(' · ')||'MBA class profile';
+const classLabel=p=>[p.year?`Class of ${p.year}`:csvMode?'':'Class of 2027',p.cohort?`${/cohort/i.test(p.cohort)?p.cohort:'Cohort '+p.cohort}`:''].filter(Boolean).join(' · ')||'MBA class profile';
 function linkedIn(p){try{const url=new URL(p.linkedin_url);return url.protocol==='https:'&&(url.hostname==='linkedin.com'||url.hostname.endsWith('.linkedin.com'))?url.href:null;}catch{return null;}}
 function sourceLabel(p){return csvMode?`Supplied enrichment · Source date: ${p.date||'Not supplied'}`:'Fictional sample profile · Illustrative evidence';}
 function card(p,matched){
- const badge=matched?`<span class="evidence-badge">${mode==='interests'?'Stated interest':csvMode?'Keyword candidate':'Experience evidence'}</span>`:'';
- const heading=matched?(mode==='interests'?'SHARED INTEREST':'SUPPLIED EXPERIENCE'):'BACKGROUND';
- const text=matched&&mode==='interests'?p.interests.join(' · '):p.experience??'Professional experience has not been supplied or is not eligible for use. Stated interests are shown separately.';
- return `<article class="profile-card"><div class="profile-heading"><span class="avatar ${p.color}">${escape(p.initials)}</span><div><h3>${escape(p.name)}</h3><p>${escape(classLabel(p))}</p></div><button class="profile-link" data-profile="${escape(p.id)}" aria-label="View ${escape(p.name)}'s ${csvMode?'':'fictional '}profile">↗</button></div><div class="card-divider"></div>${badge}${!csvMode&&!p.eligible?'<span class="review-badge">Identity review · Excluded from professional matching</span>':''}<p class="card-label">${heading}</p><p class="role-text">${escape(matched&&mode==='interests'?'Curiosity is a conversation starter.':p.role)}</p><p class="demo-evidence">${escape(text)}</p>${!matched?`<div class="interest-chips">${p.interests.map(i=>`<span>${escape(i)}</span>`).join('')}</div>`:`<p class="source-note">${escape(mode==='interests'&&csvMode?'Class roster · Stated interest':sourceLabel(p))}</p>`}<button class="card-detail" data-profile="${escape(p.id)}">See profile <span>→</span></button></article>`;
+ const view=formatProfile(p);
+ const interestMatch=matched&&mode==='interests';
+ const badge=matched?`<span class="evidence-badge">${interestMatch?'Stated interest':csvMode?'Keyword candidate':'Experience evidence'}</span>`:'';
+ const summary=interestMatch?`Interested in ${view.interests.slice(0,3).join(' · ')}.`:view.summary;
+ const chips=view.interests.slice(0,3);
+ return `<article class="profile-card"><div class="profile-heading"><span class="avatar ${p.color}">${escape(p.initials)}</span><div><h3>${escape(p.name)}</h3><p>${escape(classLabel(p))}</p></div><button class="profile-link" data-profile="${escape(p.id)}" aria-label="View ${escape(p.name)}'s ${csvMode?'':'fictional '}profile">↗</button></div><div class="card-divider"></div>${badge}<p class="card-label">${escape(interestMatch?'STATED INTERESTS':view.status.toUpperCase())}</p><p class="profile-summary">${escape(summary)}</p>${!interestMatch&&(view.skills.length||view.education.length)?`<dl class="profile-facts">${view.skills.length?`<div><dt>Listed skills</dt><dd>${escape(view.skills.slice(0,3).join(' · '))}</dd></div>`:''}${view.education.length?`<div><dt>Education</dt><dd>${escape(view.education[0].title)}</dd></div>`:''}</dl>`:''}${chips.length?`<p class="interest-label">Interests · not experience</p><div class="interest-chips">${chips.map(i=>`<span>${escape(i)}</span>`).join('')}${view.interests.length>3?`<span>+${view.interests.length-3} more</span>`:''}</div>`:''}${matched?`<p class="source-note">${escape(interestMatch&&csvMode?'Class roster · Stated interest':sourceLabel(p))}</p>`:''}<button class="card-detail" data-profile="${escape(p.id)}">See profile <span>→</span></button></article>`;
 }
 function render(){
  const cohort=$('cohort').value;
@@ -119,6 +197,8 @@ function render(){
  const shown=searched?selected:selected.slice(0,browseLimit);
  $('results-title').textContent=searched?'Your connections':'Meet your classmates';
  $('results-count').textContent=selected.length;
+ const coverage=profileCoverage(profiles);
+ $('profile-coverage').textContent=csvMode?`${coverage.professional} with professional details · ${coverage.interestsOnly} with interests only · ${coverage.missingDetails} without background or interests`:'';
  $('results-description').textContent=searched?`${mode==='experience'?'Work evidence':'Stated interests'} · ${csvMode?'Keyword candidates · Check source excerpts':'Illustrative sample search'}`:csvMode?`Showing ${shown.length} of ${selected.length} classmates`:'A small class. A remarkable range of experience.';
  $('reset').hidden=!searched;
  $('results').innerHTML=selected.length?shown.map(p=>card(p,searched)).join(''):`<div class="empty-state"><span class="empty-icon">↗</span><h3>No ${mode==='interests'?'interest':'experience'} keyword matches.</h3><p>${mode==='experience'?'Missing or ineligible evidence cannot produce professional matches. Try shared interests, or ask about a broader topic.':'Try a broader topic or explore a suggested question.'}</p><button class="secondary" id="empty-reset">Browse the class</button></div>`;
@@ -150,7 +230,14 @@ async function runSearch(){
  finally{if(version===searchVersion)finishSearch();}
 }
 function showDialog(content){$('dialog-content').innerHTML=content;$('details-dialog').showModal();}
-function showProfile(id){const p=profiles.find(p=>p.id===id);if(!p)return;const url=linkedIn(p);showDialog(`<p class="eyebrow muted">${csvMode?'CLASS ROSTER PROFILE':'FICTIONAL SAMPLE PROFILE'}</p><div class="modal-heading"><span class="avatar ${p.color}">${escape(p.initials)}</span><div><h2>${escape(p.name)}</h2><p>${escape(classLabel(p))}</p></div></div><p class="modal-role">${escape(p.role)}</p><div class="modal-section"><p class="card-label">${!csvMode&&!p.eligible?'UNRESOLVED ENRICHMENT · EXCLUDED':'SUPPLIED PROFESSIONAL EXPERIENCE'}</p><p>${escape(p.experience??'No eligible work-experience evidence supplied. This profile cannot produce a professional experience match.')}</p>${!csvMode&&!p.eligible?'<p class="notice">The enriched identity is unresolved. This text is excluded from professional matching.</p>':''}</div><div class="modal-section"><p class="card-label">STATED INTERESTS · NOT EXPERIENCE</p><div class="interest-chips">${p.interests.map(i=>`<span>${escape(i)}</span>`).join('')}</div></div><div class="modal-columns"><div><p class="card-label">SKILLS</p><p>${escape(p.skills.join(' · ')||'Not supplied')}</p></div><div><p class="card-label">EDUCATION</p><p>${escape(p.education)}</p></div></div>${url?`<p class="source-note"><a href="${escape(url)}" target="_blank" rel="noopener noreferrer">View supplied LinkedIn profile ↗</a></p>`:''}<p class="modal-footnote">${csvMode?`${escape(sourceLabel(p))}. Enrichment can be incomplete; confirm details with your classmate.`:'This person and their background are invented for the demonstration. No real classmate information is shown.'}</p>`);}
+function evidenceList(entries,empty){
+ return entries.length?`<ol class="evidence-list">${entries.map(entry=>`<li><h4>${escape(entry.title)}</h4>${entry.organization?`<p class="evidence-organization">${escape(entry.organization)}</p>`:''}${entry.detail?`<p>${escape(entry.detail)}</p>`:''}${entry.dates||entry.location?`<p class="evidence-meta">${escape([entry.dates,entry.location].filter(Boolean).join(' · '))}</p>`:''}</li>`).join('')}</ol>`:`<p class="missing-detail">${empty}</p>`;
+}
+function showProfile(id){
+ const p=profiles.find(p=>p.id===id);if(!p)return;const url=linkedIn(p),view=formatProfile(p);
+ const sourceExcerpts=view.hasProfessional?[['Experience',p.experience],['Skills',p.skills.join('; ')],['Education',p.education]].filter(([,value])=>value&&value!=='Not supplied'):[];
+ showDialog(`<p class="eyebrow muted">${csvMode?'CLASS ROSTER PROFILE':'FICTIONAL SAMPLE PROFILE'}</p><div class="modal-heading"><span class="avatar ${p.color}">${escape(p.initials)}</span><div><h2>${escape(p.name)}</h2><p>${escape(classLabel(p))}</p></div></div><p class="modal-role">${escape(view.summary)}</p><section class="modal-section"><h3 class="card-label">EXPERIENCE</h3>${evidenceList(view.work,'No eligible work-experience details supplied. Interests and skills do not establish work experience.')}</section><section class="modal-section"><h3 class="card-label">EDUCATION</h3>${evidenceList(view.education,'No eligible education details supplied.')}</section><section class="modal-section"><h3 class="card-label">SKILLS</h3>${view.skills.length?`<div class="skill-chips">${view.skills.map(skill=>`<span>${escape(skill)}</span>`).join('')}</div>`:'<p class="missing-detail">No eligible skills supplied.</p>'}</section><section class="modal-section"><h3 class="card-label">STATED INTERESTS · NOT EXPERIENCE</h3>${view.interests.length?`<div class="interest-chips">${view.interests.map(i=>`<span>${escape(i)}</span>`).join('')}</div>`:'<p class="missing-detail">No stated interests supplied.</p>'}</section>${url?`<p class="source-note"><a href="${escape(url)}" target="_blank" rel="noopener noreferrer">View supplied LinkedIn profile ↗</a></p>`:''}${view.shortened?'<p class="source-warning">The supplied source excerpts are shortened. Incomplete fields are omitted above; no missing details have been filled in.</p>':''}${sourceExcerpts.length?`<details class="source-excerpts"><summary>View supplied professional source excerpts</summary>${sourceExcerpts.map(([label,value])=>`<h4>${label}</h4><p>${escape(value)}</p>`).join('')}</details>`:''}<p class="modal-footnote">${csvMode?`${escape(sourceLabel(p))}. Enrichment can be incomplete; confirm details with your classmate.`:'This person and their background are invented for the demonstration.'}</p>`);
+}
 function about(){showDialog(`<p class="eyebrow muted">THE IDEA BEHIND CLASSBOOK</p><h2>A better first conversation.</h2><p class="modal-intro">Your class already has a remarkable range of experience. Classbook helps you find the person to learn from, collaborate with, or simply get to know.</p><div class="about-step"><span>01</span><div><h3>Ask a real question.</h3><p>Describe a problem, sector, or interest in everyday language.</p></div></div><div class="about-step"><span>02</span><div><h3>See why someone fits.</h3><p>Experience results point to supplied work evidence. Shared interests appear in their own mode.</p></div></div><div class="about-step"><span>03</span><div><h3>Make the connection.</h3><p>Use the shortlist to start a conversation and confirm the details with your classmate.</p></div></div><div class="notice"><strong>${csvMode?'About the data':'About this preview'}</strong><p>${csvMode?`${profiles.length} roster profiles are available. Professional experience, skills and education are included only when all identity and review checks pass. This search previews keyword candidates from current source excerpts; it does not call the live Jev evaluator. Review each excerpt to check the fit.`:'All ten profiles are fictional. Search uses an illustrative local sample index; it does not call the live Jev service. The private application adds invitation-only access, administrator approvals, and server-side evidence evaluation.'}</p></div><p class="modal-footnote">${csvMode?'Interests describe curiosity. They never establish professional experience. Raw files, private affiliation fields, original student IDs and credentials are not exposed.':'No real student data, account details, or credentials are included in this public demo.'}</p>`);}
 $('search-form').addEventListener('submit',event=>{event.preventDefault();runSearch();});
 $('experience-tab').addEventListener('click',()=>setMode('experience'));$('interests-tab').addEventListener('click',()=>setMode('interests'));
