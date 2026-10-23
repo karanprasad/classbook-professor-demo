@@ -43,6 +43,12 @@
 .email-unavailable{border:1px solid var(--line);border-radius:6px;background:var(--paper);color:#77766d;font-size:10px;padding:7px 9px;line-height:1.5;opacity:1;cursor:default}
 .modal-contact{margin:18px 0 0}.example-row[hidden]{display:none}
 @media(max-width:650px){.profile-linkedin{font-size:11px}.card-skills .skill-chips span{font-size:10px}.card-actions{gap:12px}.email-unavailable{font-size:10px}.modal-role{font-size:13px}}
+.profile-summary,.modal-role{display:block;-webkit-line-clamp:unset;min-height:3.6em}
+.profile-summary-line{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.8}
+.modal-summary-label{margin-top:22px}.modal-summary-label+.modal-role{margin-top:7px}
+.match-context{border-left:2px solid var(--green);padding-left:10px;margin:0 0 16px}
+.match-context p{font-size:10px;line-height:1.7;color:var(--muted);margin:4px 0}
+.match-context p:first-child{color:var(--ink)}.match-context a{color:var(--green);text-decoration:underline;text-underline-offset:2px}
 </style><meta name="directory-api" content="https://edvwcldlnlsyzhqeculx.supabase.co"><meta name="directory-key" content="sb_publishable_5xhwHbjb7xpMVL1QKvwICQ_2l4EdaAs"></head>
 <body>
 <div class="demo-banner"><span><span class="status-dot"></span>LIVE PREVIEW <span class="banner-divider">/</span> All profiles are fictional</span><button id="about-top">About this demo ↗</button></div>
@@ -60,7 +66,8 @@
 <footer class="directory-footer"><span class="brand-mark">c.</span><p>People first. Evidence always.<br/><span>Interactive concept demo · Fictional data · Illustrative sample search</span></p><button class="text-button" id="about-bottom">Explore the idea ↗</button></footer>
 </main>
 <dialog id="details-dialog"><button class="dialog-close" id="close-dialog" aria-label="Close details">×</button><div id="dialog-content"></div></dialog>
-<script type="module">// Purpose-built synthetic fixtures. No records from the private dataset.
+<script type="module">
+// Purpose-built synthetic fixtures. No records from the private dataset.
 const profiles=[
  {id:'demo-maya',name:'Maya Chen',initials:'MC',cohort:'North',color:'sage',role:'Operations & cold-chain logistics',experience:'Managed refrigerated distribution for a food supplier, coordinating perishable inventory across 12 warehouses and reducing spoilage by 18%.',interests:['Climate technology','Sustainable food systems'],tags:['perishable','refrigerated','cold chain','supply chain','logistics','inventory','food','operations'],skills:['Network planning','Inventory optimization'],education:'BEng, Industrial Engineering',eligible:true},
  {id:'demo-jordan',name:'Jordan Ellis',initials:'JE',cohort:'South',color:'clay',role:'Product management & health technology',experience:'Led product discovery and launch for a patient-scheduling platform, interviewing clinicians and partnering with engineering on a multi-clinic rollout.',interests:['Digital health','Responsible AI'],tags:['product management','product manager','healthcare','health tech','health technology','digital health','patient','software','product discovery'],skills:['User research','Product strategy'],education:'BS, Computer Science',eligible:true},
@@ -77,15 +84,57 @@ const profiles=[
 const groups=[['cold chain','perishable','refrigerated','cold-chain'],['climate','clean tech','cleantech','sustainability','sustainable','renewable'],['product management','product manager','pm'],['ai','artificial intelligence','machine learning'],['supply chain','supply-chain','logistics'],['healthcare','health tech','health technology','digital health'],['software','developer','engineering'],['venture capital','vc','venture investing']];
 const stop=new Set(['who','has','have','worked','work','with','experience','interested','interest','someone','people','that','this','does','the','and','for','from','in','on','at','of','to','a','an','is']);
 const normalize=text=>text.toLowerCase().replace(/[^a-z0-9\s-]/g,' ').replace(/\bchains\b/g,'chain').replace(/\bmanagers\b/g,'manager').replace(/\s+/g,' ').trim();
+const europeanCountries=new Set(['albania','andorra','austria','belarus','belgium','bosnia and herzegovina','bulgaria',
+ 'croatia','czechia','czech republic','denmark','estonia','finland','france','germany','greece','hungary','iceland',
+ 'ireland','italy','kosovo','latvia','liechtenstein','lithuania','luxembourg','malta','moldova','monaco','montenegro',
+ 'netherlands','north macedonia','norway','poland','portugal','romania','san marino','serbia','slovakia','slovenia',
+ 'spain','sweden','switzerland','ukraine','united kingdom','uk','u k','england','scotland','wales','northern ireland','vatican city']);
+// Public company classifications, checked against the companies' own pages. No student enrichment is added.
+const insuranceEmployers=[
+ {name:'Chubb',key:'chubb',url:'https://about.chubb.com/',checked:'2026-10-23'},
+ {name:'Pacific Life',key:'pacific life',url:'https://www.pacificlife.com/',checked:'2026-10-23'}
+];
+const eligibleWork=p=>p.eligible&&!p.quarantined&&typeof p.experience==='string'&&!!p.experience.trim();
+function europeQuestion(query){return /^(?:who (?:has |have )?)?(?:lived|resided) in europe(?: before)?$/.test(normalize(query));}
+function europeanWork(p){
+ if(!eligibleWork(p))return [];
+ return parseProfileEvidence(p.experience,'work').filter(entry=>entry.location&&!/\bremote\b/i.test(entry.location)
+   &&europeanCountries.has(normalize(entry.location.split(',').at(-1))));
+}
+function insuranceWork(p){
+ if(!eligibleWork(p))return [];
+ return parseProfileEvidence(p.experience,'work').flatMap(entry=>{
+   const source=insuranceEmployers.find(company=>normalize(entry.organization)===company.key);
+   return source?[{entry,source}]:[];
+ });
+}
+function searchContext(query){
+ return europeQuestion(query)?{type:'europe',title:'European work locations',
+   description:'Recorded European work locations · Residence history is not verified'}:null;
+}
+function matchContext(query,profile){
+ if(europeQuestion(query)){
+   const entry=europeanWork(profile)[0];
+   return entry?{badge:'European work location',reason:`Recorded work location: ${entry.location}${entry.organization?' · '+entry.organization:''}.`,note:'Residence history is not verified.'}:null;
+ }
+ if(/\binsurance\b/.test(normalize(query))){
+   const match=insuranceWork(profile)[0];
+   return match?{badge:'Insurance industry experience',reason:`Listed role: ${match.entry.title} at ${match.entry.organization}.`,
+     note:'Industry match uses the listed employer; it does not establish a specific insurance specialty.',source:match.source}:null;
+ }
+ return null;
+}
 function findMatches(query,mode='experience',cohort='',pool=profiles){
+ if(mode==='experience'&&europeQuestion(query))return pool.filter(p=>(!cohort||p.cohort===cohort)&&europeanWork(p).length)
+   .sort((a,b)=>a.name.localeCompare(b.name)).slice(0,5);
  const q=normalize(query);
  const terms=q.split(' ').filter(t=>t.length>1&&!stop.has(t));
  if(!terms.length)return [];
  const activeGroups=groups.filter(group=>group.some(term=>new RegExp(`(^| )${term}( |$)`).test(q)));
  const synonyms=activeGroups.flat();
  const coveredTerms=new Set(synonyms.flatMap(term=>term.split(' ')));
- return pool.filter(p=>(!cohort||p.cohort===cohort)&&(mode==='interests'||p.eligible&&p.experience)).map(p=>{
-   const text=normalize(mode==='interests'?p.interests.join(' '):p.experience+' '+p.tags.join(' '));
+ return pool.filter(p=>(!cohort||p.cohort===cohort)&&(mode==='interests'||eligibleWork(p))).map(p=>{
+   const text=normalize(mode==='interests'?p.interests.join(' '):p.experience+' '+p.tags.join(' ')+(insuranceWork(p).length?' insurance':''));
    if(!activeGroups.every(group=>group.some(t=>new RegExp(`(^| )${t}( |$)`).test(text))))return {profile:p,score:0};
    if(terms.some(t=>!coveredTerms.has(t)&&!new RegExp(`(^| )${t}( |$)`).test(text)))return {profile:p,score:0};
    const direct=terms.filter(t=>new RegExp(`(^| )${t}( |$)`).test(text)).length;
@@ -101,7 +150,7 @@ function searchExamples(mode='experience',cohort='',pool=profiles){
    for(const p of scope)for(const interest of p.interests)frequency.set(interest,(frequency.get(interest)||0)+1);
    questions=[...frequency].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).map(([interest])=>`Who is interested in ${interest}?`);
  }else{
-   questions=['Who has worked at Deloitte?','Who has worked at Amazon?','Who has analyst experience?',
+   questions=['Who has worked at Deloitte?','Who has experience in insurance?','Who has lived in Europe before?',
      'Who has consulting experience?','Who has product management experience?','Who has engineering experience?'];
    const omitted=new Set([...stop,'title','employer','location','start','end','date','present','until','listed']);
    const words=new Map();
@@ -213,8 +262,14 @@ function formatProfile(profile){
  else if(education.length)summary=`Listed education: ${education[0].title}${education[0].detail?' · '+education[0].detail:''}.`;
  else if(interests.length)summary=`Interested in ${profileJoin(interests.slice(0,3))}.`;
  else if(hasProfessional)summary='Professional source excerpt available; complete details were not supplied.';
- if(education.length&&(work.length||skills.length))summary+=` Education: ${education[0].title}.`;
- return {work,education,skills,interests,hasProfessional,summary:profileBrief(summary),
+ const firstLine=summary;
+ let secondLine='';
+ if(education.length&&(work.length||skills.length))secondLine=`Education: ${education[0].title}.`;
+ else if(work.length>1)secondLine=`Also listed: ${work[1].title}${work[1].organization?' at '+work[1].organization:''}.`;
+ else if(work.length&&skills.length)secondLine=`Skills: ${profileJoin(skills.slice(0,3))}.`;
+ const summaryLines=[firstLine,secondLine].filter(Boolean).map(profileBrief);
+ summary=summaryLines.join(' ');
+ return {work,education,skills,interests,hasProfessional,summary:profileBrief(summary),summaryLines,
    status:hasProfessional?'Professional details':interests.length?'Interests only':'Details not available',
    shortened:allowed&&[profile.experience,profile.education,...(profile.skills||[])].some(value=>/(?:\.\.\.|…)\s*$/.test(value||''))};
 }
@@ -232,8 +287,10 @@ function formatUnreviewed(addition){
  const split=value=>profileText(value).split(';').map(profileText).filter(Boolean);
  const work=split(addition.experience),education=split(addition.education);
  if(!work.length&&!education.length)return null;
- return {work,education,confidence:labels[addition.match_confidence],
-   summary:profileBrief(work.length?`Unreviewed supplied background: ${work[0]}.${education.length?' Education: '+education[0]+'.':''}`:`Unreviewed supplied education: ${education[0]}.`),
+ const summaryLines=[work.length?`Unreviewed supplied background: ${work[0]}.`:`Unreviewed supplied education: ${education[0]}.`,
+   work.length&&education.length?`Education: ${education[0]}.`:work.length>1?`Also supplied: ${work[1]}.`:''].filter(Boolean).map(profileBrief);
+ return {work,education,confidence:labels[addition.match_confidence],summaryLines,
+   summary:profileBrief(summaryLines.join(' ')),
    sourceDate:profileText(addition.source_date)||'Not supplied'};
 }
 function directoryProfiles(profiles){
@@ -260,27 +317,32 @@ function linkedIn(p){try{
 function sourceLabel(p){return csvMode?`Eligible experience excerpt${p.date?' · '+p.date:''}`:'Fictional sample profile · Illustrative evidence';}
 function profileLinkedIn(p){const url=linkedIn(p);return url?`<a class="profile-linkedin" href="${escape(url)}" target="_blank" rel="noopener noreferrer" aria-label="${escape(p.name)} on LinkedIn">LinkedIn ↗</a>`:'';}
 function emailButton(){return '<button class="email-unavailable" type="button" disabled title="An email address has not been provided for this profile.">Email unavailable</button>';}
+function summaryMarkup(lines){return lines.map(line=>`<span class="profile-summary-line" title="${escape(line)}">${escape(line)}</span>`).join('');}
+function matchMarkup(context){return context?`<div class="match-context"><p>${escape(context.reason)}</p><p>${escape(context.note)}</p>${context.source?`<p><a href="${escape(context.source.url)}" target="_blank" rel="noopener noreferrer">${escape(context.source.name)} industry source ↗</a> · Checked ${escape(context.source.checked)}</p>`:''}</div>`:'';}
 function card(p,matched){
  const view=formatProfile(p);
  const addition=formatUnreviewed(p.unreviewed);
  const interestMatch=matched&&mode==='interests';
- const badge=matched?`<span class="evidence-badge">${interestMatch?'Stated interest':csvMode?'Keyword candidate':'Experience evidence'}</span>`:'';
- const summary=interestMatch?`Interested in ${view.interests.slice(0,3).join(' · ')}.`:!matched&&addition&&!view.hasProfessional?addition.summary:view.summary;
+ const context=matched&&mode==='experience'?matchContext($('query').value,p):null;
+ const badge=matched?`<span class="evidence-badge">${escape(context?.badge||(interestMatch?'Stated interest':csvMode?'Keyword candidate':'Experience evidence'))}</span>`:'';
+ const unreviewedOnly=addition&&!view.hasProfessional;
+ const summaryLines=unreviewedOnly?addition.summaryLines:view.summaryLines;
  const chips=view.interests.slice(0,3);
- return `<article class="profile-card"><div class="profile-heading"><span class="avatar ${p.color}">${escape(p.initials)}</span><div class="profile-identity"><h3>${escape(p.name)}</h3>${profileLinkedIn(p)}<p>${escape(classLabel(p))}</p></div><button class="profile-link" data-profile="${escape(p.id)}" aria-label="View ${escape(p.name)}'s ${csvMode?'':'fictional '}profile">↗</button></div><div class="card-divider"></div>${badge}<p class="card-label">${escape(interestMatch?'STATED INTERESTS':!matched&&addition?'UNREVIEWED ADDITION':view.status.toUpperCase())}</p><p class="profile-summary">${escape(summary)}</p>${!matched&&addition?'<p class="addition-note">Review pending · Excluded from professional search</p>':''}${!interestMatch&&view.skills.length?`<div class="card-skills"><p class="card-label">SKILLS</p><div class="skill-chips">${view.skills.map(skill=>`<span>${escape(skill)}</span>`).join('')}</div></div>`:''}${chips.length?`<p class="interest-label">Interests · not experience</p><div class="interest-chips">${chips.map(i=>`<span>${escape(i)}</span>`).join('')}${view.interests.length>3?`<span>+${view.interests.length-3} more</span>`:''}</div>`:''}${matched?`<p class="source-note">${escape(interestMatch&&csvMode?'Class roster · Stated interest':sourceLabel(p))}</p>`:''}<div class="card-actions"><button class="card-detail" data-profile="${escape(p.id)}">See profile <span>→</span></button>${emailButton()}</div></article>`;
+ return `<article class="profile-card"><div class="profile-heading"><span class="avatar ${p.color}">${escape(p.initials)}</span><div class="profile-identity"><h3>${escape(p.name)}</h3>${profileLinkedIn(p)}<p>${escape(classLabel(p))}</p></div><button class="profile-link" data-profile="${escape(p.id)}" aria-label="View ${escape(p.name)}'s ${csvMode?'':'fictional '}profile">↗</button></div><div class="card-divider"></div>${badge}<p class="card-label">${unreviewedOnly?'UNREVIEWED SUMMARY':'PROFILE SUMMARY'}</p><p class="profile-summary">${summaryMarkup(summaryLines)}</p>${matchMarkup(context)}${unreviewedOnly?'<p class="addition-note">Review pending · Excluded from professional search</p>':''}${!interestMatch&&view.skills.length?`<div class="card-skills"><p class="card-label">SKILLS</p><div class="skill-chips">${view.skills.map(skill=>`<span>${escape(skill)}</span>`).join('')}</div></div>`:''}${chips.length?`<p class="interest-label">Interests · not experience</p><div class="interest-chips">${chips.map(i=>`<span>${escape(i)}</span>`).join('')}${view.interests.length>3?`<span>+${view.interests.length-3} more</span>`:''}</div>`:''}${matched?`<p class="source-note">${escape(interestMatch&&csvMode?'Class roster · Stated interest':sourceLabel(p))}</p>`:''}<div class="card-actions"><button class="card-detail" data-profile="${escape(p.id)}">See profile <span>→</span></button>${emailButton()}</div></article>`;
 }
 function render(){
  const cohort=$('cohort').value;
+ const context=searched&&mode==='experience'?searchContext($('query').value):null;
  const selected=searched?findMatches($('query').value,mode,cohort):profiles.filter(p=>!cohort||p.cohort===cohort);
  const shown=searched?selected:selected.slice(0,browseLimit);
- $('results-title').textContent=searched?'Your connections':'Meet your classmates';
+ $('results-title').textContent=searched?(context?.title||'Your connections'):'Meet your classmates';
  $('results-count').textContent=selected.length;
  const coverage=profileCoverage(profiles);
  $('profile-coverage').textContent=csvMode?`${coverage.professional} with eligible professional details · Only profiles with enriched details are shown`:'';
  const additionCount=profiles.filter(p=>formatUnreviewed(p.unreviewed)).length;
  $('supplement-coverage').hidden=!additionCount;
  $('supplement-coverage').textContent=`Additional unreviewed backgrounds: ${additionCount}. Excluded from professional coverage and search.`;
- $('results-description').textContent=searched?`${mode==='experience'?'Work evidence':'Stated interests'} · ${csvMode?'Keyword candidates · Check source excerpts':'Illustrative sample search'}`:csvMode?`Showing ${shown.length} of ${selected.length} classmates`:'A small class. A remarkable range of experience.';
+ $('results-description').textContent=searched?(context?.description||`${mode==='experience'?'Work evidence':'Stated interests'} · ${csvMode?'Keyword candidates · Check source excerpts':'Illustrative sample search'}`):csvMode?`Showing ${shown.length} of ${selected.length} classmates`:'A small class. A remarkable range of experience.';
  $('reset').hidden=!searched;
  $('results').innerHTML=selected.length?shown.map(p=>card(p,searched)).join(''):`<div class="empty-state"><span class="empty-icon">↗</span><h3>No ${mode==='interests'?'interest':'experience'} keyword matches.</h3><p>${mode==='experience'?'Missing or ineligible evidence cannot produce professional matches. Try shared interests, or ask about a broader topic.':'Try a broader topic or explore a suggested question.'}</p><button class="secondary" id="empty-reset">Browse the class</button></div>`;
  if(!searched&&selected.length>shown.length){const button=document.createElement('button');button.className='secondary load-more';button.textContent=`Show ${Math.min(24,selected.length-shown.length)} more classmates`;button.addEventListener('click',()=>{browseLimit+=24;render();});$('results').append(button);}
@@ -294,7 +356,7 @@ function setMode(next){mode=next;reset();$('experience-tab').classList.toggle('s
 function renderExamples(){
  const suggestions=ready?searchExamples(mode,$('cohort').value):[];
  $('examples').parentElement.hidden=!suggestions.length;
- $('examples').replaceChildren(...suggestions.map(({question,count})=>{const b=document.createElement('button');b.type='button';b.textContent=`${question} · ${count} ${count===1?'match':'matches'}`;b.addEventListener('click',()=>{$('query').value=question;runSearch();});return b;}));
+ $('examples').replaceChildren(...suggestions.map(({question,count})=>{const b=document.createElement('button');b.type='button';b.textContent=`${question} · ${count} ${searchContext(question)?.type==='europe'?(count===1?'work location':'work locations'):(count===1?'match':'matches')}`;b.addEventListener('click',()=>{$('query').value=question;runSearch();});return b;}));
 }
 function applyProfiles(latest){
  const previous=$('cohort').value;rosterCount=latest.length;profiles.splice(0,profiles.length,...directoryProfiles(latest));
@@ -327,7 +389,7 @@ function showProfile(id){
  const view=formatProfile(p),addition=formatUnreviewed(p.unreviewed);
  const sourceExcerpts=view.hasProfessional?[['Experience',p.experience],['Education',p.education]].filter(([,value])=>value&&value!=='Not supplied'):[];
  const professionalSections=view.hasProfessional||!addition?`<section class="modal-section"><h3 class="card-label">EXPERIENCE</h3>${evidenceList(view.work,'No eligible work-experience details supplied. Interests and skills do not establish work experience.')}</section><section class="modal-section"><h3 class="card-label">EDUCATION</h3>${evidenceList(view.education,'No eligible education details supplied.')}</section><section class="modal-section"><h3 class="card-label">SKILLS</h3>${view.skills.length?`<div class="skill-chips">${view.skills.map(skill=>`<span>${escape(skill)}</span>`).join('')}</div>`:'<p class="missing-detail">No eligible skills supplied.</p>'}</section>`:'';
- showDialog(`<p class="eyebrow muted">${csvMode?'CLASS ROSTER PROFILE':'FICTIONAL SAMPLE PROFILE'}</p><div class="modal-heading"><span class="avatar ${p.color}">${escape(p.initials)}</span><div><h2>${escape(p.name)}</h2>${profileLinkedIn(p)}<p>${escape(classLabel(p))}</p></div></div><div class="modal-contact">${emailButton()}</div><p class="modal-role">${escape(addition&&!view.hasProfessional?addition.summary:view.summary)}</p>${professionalSections}${unreviewedSection(p)}<section class="modal-section"><h3 class="card-label">STATED INTERESTS · NOT EXPERIENCE</h3>${view.interests.length?`<div class="interest-chips">${view.interests.map(i=>`<span>${escape(i)}</span>`).join('')}</div>`:'<p class="missing-detail">No stated interests supplied.</p>'}</section>${view.shortened?'<p class="source-warning">The supplied source excerpts are shortened. Incomplete fields are omitted above; no missing details have been filled in.</p>':''}${sourceExcerpts.length?`<details class="source-excerpts"><summary>View supplied professional source excerpts</summary>${sourceExcerpts.map(([label,value])=>`<h4>${label}</h4><p>${escape(value)}</p>`).join('')}</details>`:''}${csvMode?'':'<p class="modal-footnote">This person and their background are invented for the demonstration.</p>'}`);
+ showDialog(`<p class="eyebrow muted">${csvMode?'CLASS ROSTER PROFILE':'FICTIONAL SAMPLE PROFILE'}</p><div class="modal-heading"><span class="avatar ${p.color}">${escape(p.initials)}</span><div><h2>${escape(p.name)}</h2>${profileLinkedIn(p)}<p>${escape(classLabel(p))}</p></div></div><div class="modal-contact">${emailButton()}</div><p class="card-label modal-summary-label">PROFILE SUMMARY</p><p class="modal-role">${summaryMarkup(addition&&!view.hasProfessional?addition.summaryLines:view.summaryLines)}</p>${professionalSections}${unreviewedSection(p)}<section class="modal-section"><h3 class="card-label">STATED INTERESTS · NOT EXPERIENCE</h3>${view.interests.length?`<div class="interest-chips">${view.interests.map(i=>`<span>${escape(i)}</span>`).join('')}</div>`:'<p class="missing-detail">No stated interests supplied.</p>'}</section>${view.shortened?'<p class="source-warning">The supplied source excerpts are shortened. Incomplete fields are omitted above; no missing details have been filled in.</p>':''}${sourceExcerpts.length?`<details class="source-excerpts"><summary>View supplied professional source excerpts</summary>${sourceExcerpts.map(([label,value])=>`<h4>${label}</h4><p>${escape(value)}</p>`).join('')}</details>`:''}${csvMode?'':'<p class="modal-footnote">This person and their background are invented for the demonstration.</p>'}`);
 }
 function about(){showDialog(`<p class="eyebrow muted">THE IDEA BEHIND CLASSBOOK</p><h2>A better first conversation.</h2><p class="modal-intro">Your class already has a remarkable range of experience. Classbook helps you find the person to learn from, collaborate with, or simply get to know.</p><div class="about-step"><span>01</span><div><h3>Ask a real question.</h3><p>Describe a problem, sector, or interest in everyday language.</p></div></div><div class="about-step"><span>02</span><div><h3>See why someone fits.</h3><p>Experience results point to supplied work evidence. Shared interests appear in their own mode.</p></div></div><div class="about-step"><span>03</span><div><h3>Make the connection.</h3><p>Use the shortlist to start a conversation and confirm the details with your classmate.</p></div></div><div class="notice"><strong>${csvMode?'About the data':'About this preview'}</strong><p>${csvMode?`${profiles.length} of ${rosterCount} roster profiles have enriched details and are displayed. Profiles without enriched details are hidden. Professional search uses experience, skills and education only when all identity and review checks pass. Separately labelled unreviewed additions may be displayed, and never enter matching. This search previews keyword candidates from current source excerpts; it does not call the live Jev evaluator. Review each excerpt to check the fit.`:'All ten profiles are fictional. Search uses an illustrative local sample index; it does not call the live Jev service. The private application adds invitation-only access, administrator approvals, and server-side evidence evaluation.'}</p></div><p class="modal-footnote">${csvMode?'Interests describe curiosity. They never establish professional experience. Raw files, private affiliation fields, original student IDs and credentials are not exposed.':'No real student data, account details, or credentials are included in this public demo.'}</p>`);}
 $('search-form').addEventListener('submit',event=>{event.preventDefault();runSearch();});
