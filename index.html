@@ -49,6 +49,9 @@
 .match-context{border-left:2px solid var(--green);padding-left:10px;margin:0 0 16px}
 .match-context p{font-size:10px;line-height:1.7;color:var(--muted);margin:4px 0}
 .match-context p:first-child{color:var(--ink)}.match-context a{color:var(--green);text-decoration:underline;text-underline-offset:2px}
+.profile-summary{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal}
+.profile-summary-line{display:inline;white-space:normal;overflow:visible;text-overflow:clip}
+.modal-role{min-height:0}
 </style><meta name="directory-api" content="https://edvwcldlnlsyzhqeculx.supabase.co"><meta name="directory-key" content="sb_publishable_5xhwHbjb7xpMVL1QKvwICQ_2l4EdaAs"></head>
 <body>
 <div class="demo-banner"><span><span class="status-dot"></span>LIVE PREVIEW <span class="banner-divider">/</span> All profiles are fictional</span><button id="about-top">About this demo ↗</button></div>
@@ -189,6 +192,7 @@ function normalizeProfiles(records){
    return {id:r.id,name:r.name,initials:r.name.split(/\s+/).filter(Boolean).map(s=>s[0]).slice(0,2).join(''),
      year:text(r.year),cohort:text(r.cohort),color:'clay',role:experience?'Professional background':'Professional evidence not supplied',
      experience,interests:list(r.interests),tags:[],skills:list(r.skills),education:text(r.education)||'Not supplied',
+     description_summary:text(r.profile_description_summary),
      eligible:!!experience,quarantined:false,linkedin_url:text(r.linkedin_url),source:text(r.enrichment_source)||'Supplied enrichment',date:text(r.enrichment_date),unreviewed};
  });
 }
@@ -252,24 +256,23 @@ function formatProfile(profile){
  const skills=allowed?profileList(profile.skills).slice(0,5):[];
  const interests=profileList(profile.interests);
  const hasProfessional=allowed&&[profile.experience,profile.education,...skills].some(value=>!!profileText(value));
+ const description=allowed?profileText(profile.description_summary):'';
+ const academic=/^(?:(?:full|part)[ -]time\s+)?(?:m\.?b\.?a\.?\s+|graduate\s+|undergraduate\s+)?(?:candidate|student)\b/i;
+ const previousRole=work.find(entry=>!academic.test(entry.title));
  let summary='Profile details have not been supplied.';
- if(work.length){
-   const first=work[0];
-   summary=/^(?:Title|Employer|Location|Start date|End date):/.test(profileText(profile.experience))?
-     `${first.title}${first.organization?' at '+first.organization:''}.`:
-     (first.title.match(/^.*?[.!?](?:\s|$)/)?.[0].trim()||first.title);
- }else if(skills.length)summary=`Listed skills: ${profileJoin(skills.slice(0,3))}.`;
- else if(education.length)summary=`Listed education: ${education[0].title}${education[0].detail?' · '+education[0].detail:''}.`;
+ if(description)summary=description;
+ else if(previousRole){
+   const labeled=/^(?:Title|Employer|Location|Start date|End date):/.test(profileText(profile.experience));
+   const role=labeled?`Brings experience as ${previousRole.title}${previousRole.organization?' at '+previousRole.organization:''}`:
+     (previousRole.title.match(/^.*?[.!?](?:\s|$)/)?.[0].trim()||previousRole.title).replace(/[.!?]$/,'');
+   summary=role+(education.length?`, with education at ${education[0].title}.`:'.');
+ }else if(education.length)summary=`Has an educational background at ${education[0].title}${skills.length?', with listed skills in '+profileJoin(skills.slice(0,3)):''}.`;
+ else if(skills.length)summary=`Lists skills in ${profileJoin(skills.slice(0,3))}.`;
+ else if(work.length)summary=`Is listed as ${work[0].title}${work[0].organization?' at '+work[0].organization:''}.`;
  else if(interests.length)summary=`Interested in ${profileJoin(interests.slice(0,3))}.`;
  else if(hasProfessional)summary='Professional source excerpt available; complete details were not supplied.';
- const firstLine=summary;
- let secondLine='';
- if(education.length&&(work.length||skills.length))secondLine=`Education: ${education[0].title}.`;
- else if(work.length>1)secondLine=`Also listed: ${work[1].title}${work[1].organization?' at '+work[1].organization:''}.`;
- else if(work.length&&skills.length)secondLine=`Skills: ${profileJoin(skills.slice(0,3))}.`;
- const summaryLines=[firstLine,secondLine].filter(Boolean).map(profileBrief);
- summary=summaryLines.join(' ');
- return {work,education,skills,interests,hasProfessional,summary:profileBrief(summary),summaryLines,
+ summary=profileBrief(summary);
+ return {work,education,skills,interests,hasProfessional,summary,summaryLines:[summary],summarySource:description?'linkedin_description':'profile_fields',
    status:hasProfessional?'Professional details':interests.length?'Interests only':'Details not available',
    shortened:allowed&&[profile.experience,profile.education,...(profile.skills||[])].some(value=>/(?:\.\.\.|…)\s*$/.test(value||''))};
 }
@@ -287,8 +290,8 @@ function formatUnreviewed(addition){
  const split=value=>profileText(value).split(';').map(profileText).filter(Boolean);
  const work=split(addition.experience),education=split(addition.education);
  if(!work.length&&!education.length)return null;
- const summaryLines=[work.length?`Unreviewed supplied background: ${work[0]}.`:`Unreviewed supplied education: ${education[0]}.`,
-   work.length&&education.length?`Education: ${education[0]}.`:work.length>1?`Also supplied: ${work[1]}.`:''].filter(Boolean).map(profileBrief);
+ const summary=profileBrief(work.length?`Unreviewed supplied background: ${work[0].replace(/[.!?]$/,'')}${education.length?'; education: '+education[0]:''}.`:`Unreviewed supplied education: ${education[0]}.`);
+ const summaryLines=[summary];
  return {work,education,confidence:labels[addition.match_confidence],summaryLines,
    summary:profileBrief(summaryLines.join(' ')),
    sourceDate:profileText(addition.source_date)||'Not supplied'};
@@ -389,7 +392,7 @@ function showProfile(id){
  const view=formatProfile(p),addition=formatUnreviewed(p.unreviewed);
  const sourceExcerpts=view.hasProfessional?[['Experience',p.experience],['Education',p.education]].filter(([,value])=>value&&value!=='Not supplied'):[];
  const professionalSections=view.hasProfessional||!addition?`<section class="modal-section"><h3 class="card-label">EXPERIENCE</h3>${evidenceList(view.work,'No eligible work-experience details supplied. Interests and skills do not establish work experience.')}</section><section class="modal-section"><h3 class="card-label">EDUCATION</h3>${evidenceList(view.education,'No eligible education details supplied.')}</section><section class="modal-section"><h3 class="card-label">SKILLS</h3>${view.skills.length?`<div class="skill-chips">${view.skills.map(skill=>`<span>${escape(skill)}</span>`).join('')}</div>`:'<p class="missing-detail">No eligible skills supplied.</p>'}</section>`:'';
- showDialog(`<p class="eyebrow muted">${csvMode?'CLASS ROSTER PROFILE':'FICTIONAL SAMPLE PROFILE'}</p><div class="modal-heading"><span class="avatar ${p.color}">${escape(p.initials)}</span><div><h2>${escape(p.name)}</h2>${profileLinkedIn(p)}<p>${escape(classLabel(p))}</p></div></div><div class="modal-contact">${emailButton()}</div><p class="card-label modal-summary-label">PROFILE SUMMARY</p><p class="modal-role">${summaryMarkup(addition&&!view.hasProfessional?addition.summaryLines:view.summaryLines)}</p>${professionalSections}${unreviewedSection(p)}<section class="modal-section"><h3 class="card-label">STATED INTERESTS · NOT EXPERIENCE</h3>${view.interests.length?`<div class="interest-chips">${view.interests.map(i=>`<span>${escape(i)}</span>`).join('')}</div>`:'<p class="missing-detail">No stated interests supplied.</p>'}</section>${view.shortened?'<p class="source-warning">The supplied source excerpts are shortened. Incomplete fields are omitted above; no missing details have been filled in.</p>':''}${sourceExcerpts.length?`<details class="source-excerpts"><summary>View supplied professional source excerpts</summary>${sourceExcerpts.map(([label,value])=>`<h4>${label}</h4><p>${escape(value)}</p>`).join('')}</details>`:''}${csvMode?'':'<p class="modal-footnote">This person and their background are invented for the demonstration.</p>'}`);
+ showDialog(`<p class="eyebrow muted">${csvMode?'CLASS ROSTER PROFILE':'FICTIONAL SAMPLE PROFILE'}</p><div class="modal-heading"><span class="avatar ${p.color}">${escape(p.initials)}</span><div><h2>${escape(p.name)}</h2>${profileLinkedIn(p)}<p>${escape(classLabel(p))}</p></div></div><div class="modal-contact">${emailButton()}</div><p class="card-label modal-summary-label">PROFILE SUMMARY</p><p class="modal-role">${summaryMarkup(addition&&!view.hasProfessional?addition.summaryLines:view.summaryLines)}</p>${professionalSections}${unreviewedSection(p)}<section class="modal-section"><h3 class="card-label">STATED INTERESTS · NOT EXPERIENCE</h3>${view.interests.length?`<div class="interest-chips">${view.interests.map(i=>`<span>${escape(i)}</span>`).join('')}</div>`:'<p class="missing-detail">No stated interests supplied.</p>'}</section>${sourceExcerpts.length?`<details class="source-excerpts"><summary>View supplied professional source excerpts</summary>${sourceExcerpts.map(([label,value])=>`<h4>${label}</h4><p>${escape(value)}</p>`).join('')}</details>`:''}${csvMode?'':'<p class="modal-footnote">This person and their background are invented for the demonstration.</p>'}`);
 }
 function about(){showDialog(`<p class="eyebrow muted">THE IDEA BEHIND CLASSBOOK</p><h2>A better first conversation.</h2><p class="modal-intro">Your class already has a remarkable range of experience. Classbook helps you find the person to learn from, collaborate with, or simply get to know.</p><div class="about-step"><span>01</span><div><h3>Ask a real question.</h3><p>Describe a problem, sector, or interest in everyday language.</p></div></div><div class="about-step"><span>02</span><div><h3>See why someone fits.</h3><p>Experience results point to supplied work evidence. Shared interests appear in their own mode.</p></div></div><div class="about-step"><span>03</span><div><h3>Make the connection.</h3><p>Use the shortlist to start a conversation and confirm the details with your classmate.</p></div></div><div class="notice"><strong>${csvMode?'About the data':'About this preview'}</strong><p>${csvMode?`${profiles.length} of ${rosterCount} roster profiles have enriched details and are displayed. Profiles without enriched details are hidden. Professional search uses experience, skills and education only when all identity and review checks pass. Separately labelled unreviewed additions may be displayed, and never enter matching. This search previews keyword candidates from current source excerpts; it does not call the live Jev evaluator. Review each excerpt to check the fit.`:'All ten profiles are fictional. Search uses an illustrative local sample index; it does not call the live Jev service. The private application adds invitation-only access, administrator approvals, and server-side evidence evaluation.'}</p></div><p class="modal-footnote">${csvMode?'Interests describe curiosity. They never establish professional experience. Raw files, private affiliation fields, original student IDs and credentials are not exposed.':'No real student data, account details, or credentials are included in this public demo.'}</p>`);}
 $('search-form').addEventListener('submit',event=>{event.preventDefault();runSearch();});
