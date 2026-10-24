@@ -223,6 +223,36 @@ function profileList(values){
 }
 function profileBrief(value){return value.length<=200?value:value.slice(0,196).replace(/\s+\S*$/,'')+'…';}
 function profileJoin(values){return values.length<2?values.join(''):values.slice(0,-1).join(', ')+' and '+values.at(-1);}
+// An editorial display choice, never a ranking signal or an eligibility rule.
+// Exact institution names only. A separate explicit bachelor's degree is required.
+const summaryUndergraduateInstitutions=new Set([
+ 'Stanford University','Harvard University','Massachusetts Institute of Technology','California Institute of Technology',
+ 'Princeton University','Yale University','Columbia University','University of Pennsylvania','Brown University',
+ 'Dartmouth College','Cornell University','University of Chicago','Northwestern University','Duke University',
+ 'Johns Hopkins University','Carnegie Mellon University','Carnegie Mellon University - Tepper School of Business',
+ 'Georgetown University','University of Notre Dame','Vanderbilt University','Rice University','Emory University',
+ 'Emory University - Goizueta Business School','New York University','University of Southern California',
+ 'University of California, Berkeley','UCLA','University of California, Los Angeles','UC San Diego',
+ 'University of California San Diego','University of Michigan','University of Virginia',
+ 'The University of North Carolina at Chapel Hill','Georgia Institute of Technology','University of Wisconsin-Madison',
+ 'University of Illinois Urbana-Champaign','Purdue University','The Ohio State University','Pennsylvania State University',
+ 'University of Washington','University of Minnesota','University of Maryland','University of Florida',
+ 'The University of Texas at Austin','Texas A&M University','Michigan State University','Indiana University Bloomington',
+ 'United States Military Academy at West Point','United States Naval Academy',
+ 'University of Oxford','University of Cambridge','Imperial College London','University College London',
+ 'London School of Economics and Political Science','ETH Zurich','National University of Singapore',
+ 'Nanyang Technological University','Tsinghua University','Peking University','Seoul National University',
+ 'National Taiwan University','The University of Tokyo','University of Toronto','McGill University',
+ 'University of British Columbia','University of Melbourne','University of Sydney','UNSW',
+ 'Indian Institute of Technology, Bombay','Indian Institute of Technology, Delhi','Indian Institute of Technology, Madras',
+ 'Indian Institute of Technology, Kanpur','Indian Institute of Technology, Kharagpur','Indian Institute of Technology, Roorkee',
+ 'Tecnológico de Monterrey'
+].map(name=>name.toLowerCase()));
+const sharedBusinessSchool=/\bMcCombs\b|\bMBA\b[^.!?]*\bUT Austin\b/i;
+function summaryUndergraduate(education){
+ return education.find(entry=>/^BACHELORS(?:\s*·|$)/i.test(entry.detail)&&
+   summaryUndergraduateInstitutions.has(entry.title.toLowerCase())&&!sharedBusinessSchool.test(entry.title))?.title||'';
+}
 function profileDate(value){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return value;
  const month=Number(value.slice(5,7));
@@ -256,21 +286,30 @@ function formatProfile(profile){
  const skills=allowed?profileList(profile.skills).slice(0,5):[];
  const interests=profileList(profile.interests);
  const hasProfessional=allowed&&[profile.experience,profile.education,...skills].some(value=>!!profileText(value));
- const description=allowed?profileText(profile.description_summary):'';
+ const suppliedDescription=allowed?profileText(profile.description_summary):'';
+ const undergraduate=summaryUndergraduate(education);
+ const educationText=profileText(profile.education).replace(/Institution:\s*/g,'Institution: ');
+ const mentionsOtherSchool=education.some(entry=>educationText.includes('Institution: '+entry.title)&&entry.title!==undergraduate&&
+   suppliedDescription.toLowerCase().includes(entry.title.toLowerCase()));
+ const description=!sharedBusinessSchool.test(suppliedDescription)&&!mentionsOtherSchool?suppliedDescription:'';
  const academic=/^(?:(?:full|part)[ -]time\s+)?(?:m\.?b\.?a\.?\s+|graduate\s+|undergraduate\s+)?(?:candidate|student)\b/i;
- const previousRole=work.find(entry=>!academic.test(entry.title));
+ const previousRole=work.find(entry=>!academic.test(entry.title)&&!sharedBusinessSchool.test(entry.title+' '+entry.organization));
  let summary='Profile details have not been supplied.';
  if(description)summary=description;
  else if(previousRole){
    const labeled=/^(?:Title|Employer|Location|Start date|End date):/.test(profileText(profile.experience));
    const role=labeled?`Brings experience as ${previousRole.title}${previousRole.organization?' at '+previousRole.organization:''}`:
      (previousRole.title.match(/^.*?[.!?](?:\s|$)/)?.[0].trim()||previousRole.title).replace(/[.!?]$/,'');
-   summary=role+(education.length?`, with education at ${education[0].title}.`:'.');
- }else if(education.length)summary=`Has an educational background at ${education[0].title}${skills.length?', with listed skills in '+profileJoin(skills.slice(0,3)):''}.`;
+   summary=role+'.';
+ }else if(undergraduate)summary=`Undergraduate studies at ${undergraduate}${skills.length?', with listed skills in '+profileJoin(skills.slice(0,3)):''}.`;
  else if(skills.length)summary=`Lists skills in ${profileJoin(skills.slice(0,3))}.`;
- else if(work.length)summary=`Is listed as ${work[0].title}${work[0].organization?' at '+work[0].organization:''}.`;
+ else if(education.length)summary='Education details are available in the profile.';
  else if(interests.length)summary=`Interested in ${profileJoin(interests.slice(0,3))}.`;
  else if(hasProfessional)summary='Professional source excerpt available; complete details were not supplied.';
+ if(undergraduate&&!summary.toLowerCase().includes(undergraduate.toLowerCase())){
+   const withSchool=summary.replace(/[.!?]$/,'')+`, with undergraduate studies at ${undergraduate}.`;
+   if(withSchool.length<=200)summary=withSchool;
+ }
  summary=profileBrief(summary);
  return {work,education,skills,interests,hasProfessional,summary,summaryLines:[summary],summarySource:description?'linkedin_description':'profile_fields',
    status:hasProfessional?'Professional details':interests.length?'Interests only':'Details not available',
@@ -290,7 +329,9 @@ function formatUnreviewed(addition){
  const split=value=>profileText(value).split(';').map(profileText).filter(Boolean);
  const work=split(addition.experience),education=split(addition.education);
  if(!work.length&&!education.length)return null;
- const summary=profileBrief(work.length?`Unreviewed supplied background: ${work[0].replace(/[.!?]$/,'')}${education.length?'; education: '+education[0]:''}.`:`Unreviewed supplied education: ${education[0]}.`);
+ const summaryWork=work.find(value=>!sharedBusinessSchool.test(value));
+ // Unstructured additions cannot establish an undergraduate degree.
+ const summary=profileBrief(summaryWork?`Unreviewed supplied background: ${summaryWork.replace(/[.!?]$/,'')}.`:'Unreviewed background details are available in the profile.');
  const summaryLines=[summary];
  return {work,education,confidence:labels[addition.match_confidence],summaryLines,
    summary:profileBrief(summaryLines.join(' ')),
